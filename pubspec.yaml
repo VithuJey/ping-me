@@ -27,6 +27,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  contact_picker: ^0.0.2
+  permission_handler: ^5.0.0+hotfix.4
+    
 
 
 # For information on the generic Dart part of this file, see the
