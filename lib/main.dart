@@ -4,6 +4,8 @@ import 'package:ping_me/pages/day_time.dart';
 
 void main() => runApp(MaterialApp(
 
+  debugShowCheckedModeBanner: false,
+
   initialRoute: '/details_list',
 
   routes: {

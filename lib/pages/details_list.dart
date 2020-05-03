@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:contact_picker/contact_picker.dart';
+
+import 'package:contacts_service/contacts_service.dart'; 
+import 'package:permission_handler/permission_handler.dart';
+import 'package:ping_me/pages/phone_contact.dart';
 
 class DetailsListPage extends StatefulWidget {
   // DetailsListPage({Key key, this.title}) : super(key: key);
@@ -11,11 +14,16 @@ class DetailsListPage extends StatefulWidget {
 }
 
 class _DetailsListState extends State<DetailsListPage> {
-
-  final ContactPicker _contactPicker = new ContactPicker();
-  Contact _contact;
   
   List dayTime = [];
+  List sortedContacts = [];
+  List selectedContacts = [];
+
+  @override
+  void initState() {
+    getContactsFromPhone();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,63 +34,127 @@ class _DetailsListState extends State<DetailsListPage> {
     return Scaffold(
       appBar: AppBar(
       ),
+
       body: Container(
         padding: EdgeInsets.all(15.0),
         child: Column(
-          children: <Widget>[Flexible(child: dayTimeList())],
+          children: <Widget>[
+            Flexible(child: list("Day - Time", "day", dayTime)),
+            Flexible(child: list("Contacts", "contact", selectedContacts))
+          ],
         ),
       ),
       
       floatingActionButton: FloatingActionButton(
         // onPressed: _incrementCounter,
-        onPressed: () async {
-                  Contact contact = await _contactPicker.selectContact();
-                  setState(() {
-                    _contact = contact;
-                    print(_contact);
-                  });
-                },
-        
-        // () async {
-        //   dynamic result = await Navigator.pushNamed(context, '/day_time', arguments: dayTime);
-        //   setState(() {
-        //     dayTime = (result == null ? [] : result);
-        //   });
-        // },
+        onPressed:
+        // Invoke choose contact screen
+        () async {
+          List contacts = await PhoneContact().showMultiSelect(context, sortedContacts);
+          if(contacts != null){
+            setState(() {
+              selectedContacts = contacts;
+              print(selectedContacts);
+            });
+          }
+        },
+        // Invoke day-time screen
+          // () async {
+            // getContactsFromPhone();
+            // dynamic result = await Navigator.pushNamed(context, '/day_time', arguments: dayTime);
+            // setState(() {
+            //   dayTime = (result == null ? [] : result);
+            // });
+          // },
         tooltip: 'Increment',
         child: Icon(Icons.add),
       ),
+
     );
   }
 
-  Widget dayTimeList() {
+  Widget list(String title, String type, List typeList) {
   return SingleChildScrollView(
     child: Card(
       child: ExpansionTile(
         title: Text(
-          "Day - Time",
+          title,
           style: new TextStyle(),
           textAlign: TextAlign.center,
         ),
-        children: ListMyWidgets(),
+        children: listMyWidgets(type, typeList),
       ),
     ),
   );
-}
 
-  List<Widget> ListMyWidgets() {
+  }
+
+  List<Widget> listMyWidgets(String type, List typeList) {
     List<Widget> list = new List();
-    for(int index=0;index<dayTime.length;index++) {
-      list.add( 
-        ListTile(
+    
+    if(type == "day") {
+      for(int index=0;index<typeList.length;index++) {
+        list.add(
+          ListTile(
             title: Text("${dayTime[index]["day"]} - ${dayTime[index]["time"].hour}:${dayTime[index]["time"].minute} "),
             trailing: Icon(Icons.more_vert),
-          ),
-        
-      );
+          )
+        );
+      }
+    } else if(type == "contact") {
+      for(int index=0;index<typeList.length;index++) {
+        list.add(
+          ListTile(
+            title: Text(typeList[index]["phone"]),
+            trailing: Icon(Icons.more_vert),
+          )
+        );
+      }
     }
+    
     return list;
   }
 
+  getContactsFromPhone() async {
+    PermissionStatus permissionStatus = await _getContactPermission();
+    if (permissionStatus == PermissionStatus.granted) {
+      Iterable<Contact> contacts = await ContactsService.getContacts();
+
+      String phoneNum, fullName, email;
+      var con;
+
+      print("PHONE");
+      
+      for(Contact contact in contacts) {
+        phoneNum = contact.phones.first==null ? "error" : contact.phones.first.value;
+        
+        // email = contact.emails.first==null ? "error" : contact.emails.first.value;
+
+        fullName = contact.displayName;
+
+        con = {"phone": phoneNum, "name": fullName, "email":email};
+
+        sortedContacts.add(con);
+      }
+
+      print(sortedContacts);
+      
+    }
+  }
+
+  Future<PermissionStatus> _getContactPermission() async {
+    PermissionStatus permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.contacts);
+    if (permission != PermissionStatus.granted && permission != PermissionStatus.disabled) {
+      Map<PermissionGroup, PermissionStatus> permissionStatus = await PermissionHandler().requestPermissions([PermissionGroup.contacts]);
+      return permissionStatus[PermissionGroup.contacts] ?? PermissionStatus.unknown;
+    } else {
+      return permission;
+    }
+  }
+
 }
+
+
+
+
 
