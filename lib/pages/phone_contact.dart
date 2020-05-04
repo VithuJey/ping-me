@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class PhoneContact {
   
   List <MultiSelectDialogItem<int>> multiItem = List();
-  List selectedContacts;
 
   void populateMultiselect(List sortedContacts){
     for(var i in sortedContacts){
@@ -12,18 +11,23 @@ class PhoneContact {
     }
   }
 
-// Return a list with selected contacts as Future<List>
-  Future<List> showMultiSelect(BuildContext context, List sortedContacts) async {
+  // Return a list with selected contacts as Future<List>
+  Future<List> showMultiSelect(BuildContext context, List sortedContacts, List selectedContacts) async {
     multiItem = [];
     populateMultiselect(sortedContacts);
     final items = multiItem;
+    dynamic con = selectedContacts.isNotEmpty ? selectedContacts.toSet() : null;
+    // print(selectedContacts.runtimeType);
+    // print(con);
+    // print(con.runtimeType);
+    // print(null.runtimeType);
 
     final selectedValues = await showDialog<Set<int>>(
       context: context,
       builder: (BuildContext context) {
         return MultiSelectDialog(
           items: items,
-          // initialSelectedValues: [1,2].toSet(),
+          initialSelectedValues: con,
         );
       },
     );
@@ -35,6 +39,7 @@ class PhoneContact {
 }
 
 // SelectContact - Widget
+// MultiSelect class
 class MultiSelectDialogItem<V> {
   const MultiSelectDialogItem(this.value, this.label);
 
@@ -42,6 +47,7 @@ class MultiSelectDialogItem<V> {
   final String label;
 }
 
+// MultiSelect Stateful Widget
 class MultiSelectDialog<V> extends StatefulWidget {
   MultiSelectDialog({Key key, this.items, this.initialSelectedValues}) : super(key: key);
 
@@ -52,6 +58,7 @@ class MultiSelectDialog<V> extends StatefulWidget {
   State<StatefulWidget> createState() => _MultiSelectDialogState<V>();
 }
 
+// MultiSelect State
 class _MultiSelectDialogState<V> extends State<MultiSelectDialog<V>> {
   final _selectedValues = Set<V>();
 
@@ -110,16 +117,8 @@ class _MultiSelectDialogState<V> extends State<MultiSelectDialog<V>> {
     final checked = _selectedValues.contains(item.value);
     return CheckboxListTile(
       value: checked,
-      title: 
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(item.label, textAlign: TextAlign.left),
-              Text(item.value.toString(), style: TextStyle(color: Colors.grey))
-              ]
-      )
-        
-      ,
+      title: Text(item.label, textAlign: TextAlign.left),
+      subtitle: Text(item.value.toString(), style: TextStyle(color: Colors.grey)),
       controlAffinity: ListTileControlAffinity.leading,
       onChanged: (checked) => _onItemCheckedChange(item.value, checked),
     );
