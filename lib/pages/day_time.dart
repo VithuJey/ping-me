@@ -48,22 +48,28 @@ class _DayTimeState extends State<DayTimePage> {
         child:Column(
           children: <Widget>[
 
-            // Day_Dropdown
-            DropdownButton<String>(
-              isExpanded: true,
-              items : days.map((String value){
-                return DropdownMenuItem<String>(
-                value :value,
-                child: Text (value)
-                );
-              }).toList(),
-              value: this._day,
-              onChanged:(String value) {
-                  setState(() {
-                    this._day = value;
-                  });
-              }
+            new Container(
+              width: 360,
+              child: 
+                // Day_Dropdown
+                DropdownButton<String>(
+                  isExpanded: true,
+                  items : days.map((String value){
+                    return DropdownMenuItem<String>(
+                    value :value,
+                    child: Text (value)
+                    );
+                  }).toList(),
+                  value: this._day,
+                  onChanged:(String value) {
+                      setState(() {
+                        this._day = value;
+                      });
+                  }
+                ),
             ),
+
+            SizedBox(height: 10),
               
             // Time_Picker
             ListTile(
@@ -72,17 +78,51 @@ class _DayTimeState extends State<DayTimePage> {
               onTap: _pickTime,
             ),
 
+            SizedBox(height: 10),
+
             // Add Button
             // RaisedButton(onPressed: _clearAll, child: Text("Clear All")),
-            RaisedButton(onPressed: _addDayTime, child: Text("Add")),
+            RaisedButton(onPressed: _addDayTime, child: Text("Add", style: TextStyle(color: Colors.white),), shape: StadiumBorder(), highlightElevation: 2, elevation: 6, color: Colors.lightBlue[400],),
 
+            SizedBox(height: 50),
+
+            // List of Added Day-Time
+            new Flexible(
+              child: new ListView.builder
+                (
+                itemCount: dayTime.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return new ListTile(
+                    title: Text("${dayTime[index]["day"]} - ${dayTime[index]["time"].hour}:${dayTime[index]["time"].minute} "),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        IconButton(
+                          icon: Icon(
+                            Icons.cancel,
+                            size: 20.0,
+                            color: Colors.red[500],
+                          ),
+                          onPressed: () {
+                              _onDeleteItemPressed(index);
+                          },
+                        ),
+                      ]
+                    )
+                  );
+                }
+              )
+            ),
+
+
+            // SizedBox(height: 20), 
             // List of Day-Time
-            dayTime.isNotEmpty ? Text("${dayTime.length} record added...") : Text("No day and time selected...")
+            // dayTime.isNotEmpty ? Text("${dayTime.length} record added...") : Text("No day and time selected..."),           
 
           ],
         )
       ),
-      floatingActionButton: FloatingActionButton(onPressed: _popDataBack, tooltip: 'Save', child: Icon(Icons.save),),
+      // floatingActionButton: FloatingActionButton(onPressed: _popDataBack, tooltip: 'Save', child: Icon(Icons.save),),
     );
   }
 
@@ -98,12 +138,39 @@ class _DayTimeState extends State<DayTimePage> {
   }
 
   _addDayTime() {
-    this.dayTime.add({"day":this._day, "time":this._time});     
-    days.remove(_day);
+    if (_day != "Select a day" && _time != TimeOfDay(hour: 00,minute:00)){
+      this.dayTime.add({"day":this._day, "time":this._time});     
+      days.remove(_day);
+      setState(() {
+        this._day = "Select a day";
+        this._time=TimeOfDay(hour: 00,minute:00);
+        this.dayTime = dayTime;
+      });
+    } else {
+      return showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Note'),
+        content: const Text('Select a suitable Day and Time.'),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Ok'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+    }
+  }
+
+  _onDeleteItemPressed(dynamic index) {
+    this.dayTime.removeAt(index);
     setState(() {
-      this._day = "Select a day";
-      this._time=TimeOfDay(hour: 00,minute:00);
-      this.dayTime = dayTime;
+      dayTime = dayTime;
     });
   }
 

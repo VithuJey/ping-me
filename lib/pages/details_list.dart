@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:contacts_service/contacts_service.dart'; 
 import 'package:permission_handler/permission_handler.dart';
+import 'package:animated_floatactionbuttons/animated_floatactionbuttons.dart';
 import 'package:ping_me/pages/phone_contact.dart';
 
 class DetailsListPage extends StatefulWidget {
@@ -51,29 +52,18 @@ class _DetailsListState extends State<DetailsListPage> {
           ],
         ),
       ),
-      
-      floatingActionButton: FloatingActionButton(
-        // onPressed: _incrementCounter,
-        onPressed:
-        // Invoke choose contact screen
-        () async {
-          List contacts = await PhoneContact().showMultiSelect(context, sortedContacts, selectedContacts);
-          if(contacts != null){
-            selectedContacts = contacts;
-          }
-          await getContactName(selectedContacts);
-          // await removeSelectedFromSortedContacts();
-        },
-        // Invoke day-time screen
-          // () async {
-            // dynamic result = await Navigator.pushNamed(context, '/day_time', arguments: dayTime);
-            // setState(() {
-            //   dayTime = (result == null ? [] : result);
-            // });
-          // },
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+
+
+      floatingActionButton: AnimatedFloatingActionButton(
+        //Fab list
+        fabButtons: <Widget>[
+            invokeContact(), invokeDayTime()
+        ],
+        colorStartAnimation: Colors.blue,
+        colorEndAnimation: Colors.red,
+        animatedIconData: AnimatedIcons.menu_close //To principal button
       ),
+     
 
     );
   }
@@ -96,19 +86,42 @@ class _DetailsListState extends State<DetailsListPage> {
     print(selectedContactAllDetails);
   }
 
-  // void removeSelectedFromSortedContacts(){
-  //   List contactsWithouSelected = sortedContactsWithouSelected;
-  //   for(int i=0;i<selectedContacts.length;i++){
-  //     for(int j=0;j<sortedContacts.length;j++){
-  //       if(i == int.parse(sortedContacts[j]['phone'])) {
-  //         contactsWithouSelected.removeAt(j);
-  //       }
-  //     }
-  //   }
-  //   setState(() {
-  //     sortedContactsWithouSelected = contactsWithouSelected;
-  //   });
-  // }
+  Widget invokeContact() {
+    return Container(
+      child: FloatingActionButton(
+        heroTag: null,
+        onPressed: 
+          // Invoke choose contact screen
+          () async {
+            List contacts = await PhoneContact().showMultiSelect(context, sortedContacts, selectedContacts);
+            if(contacts != null){
+              selectedContacts = contacts;
+            }
+            await getContactName(selectedContacts);
+          },
+        tooltip: 'First button',
+        child: Icon(Icons.contacts),
+      ),
+    );
+  }
+
+  Widget invokeDayTime() {
+    return Container(
+      child: FloatingActionButton(
+        heroTag: null,
+        onPressed:
+          // Invoke choose day-time screen 
+          () async {
+            dynamic result = await Navigator.pushNamed(context, '/day_time', arguments: dayTime);
+            setState(() {
+              dayTime = (result == null ? dayTime : result);
+            });
+          },
+        tooltip: 'Second button',
+        child: Icon(Icons.access_time),
+      ),
+    );
+  }
 
   Widget list(String title, String type, List typeList) {
   return SingleChildScrollView(
@@ -134,7 +147,31 @@ class _DetailsListState extends State<DetailsListPage> {
         list.add(
           ListTile(
             title: Text("${dayTime[index]["day"]} - ${dayTime[index]["time"].hour}:${dayTime[index]["time"].minute} "),
-            trailing: Icon(Icons.more_vert),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                // IconButton(
+                //   icon: Icon(
+                //     Icons.cached,
+                //     size: 20.0,
+                //     color: Colors.blueGrey[500],
+                //   ),
+                //   onPressed: () {
+                //     //   _onDeleteItemPressed(index);
+                //   },
+                // ),
+                IconButton(
+                  icon: Icon(
+                    Icons.delete,
+                    size: 20.0,
+                    color: Colors.red[500],
+                  ),
+                  onPressed: () {
+                    //   _onDeleteItemPressed(index);
+                  },
+                ),
+              ],
+            ),
           )
         );
       }
@@ -142,9 +179,26 @@ class _DetailsListState extends State<DetailsListPage> {
       for(int index=0;index<typeList.length;index++) {
         list.add(
           ListTile(
+            leading: CircleAvatar(
+              backgroundImage: MemoryImage(typeList[index]["avatar"]),
+            ),
             title: Text(typeList[index]["name"]),
             subtitle: Text(typeList[index]["phone"]),
-            trailing: Icon(Icons.more_vert),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.delete,
+                    size: 20.0,
+                    color: Colors.red[500],
+                  ),
+                  onPressed: () {
+                    //   _onDeleteItemPressed(index);
+                  },
+                ),
+              ],
+            ),
           )
         );
       }
@@ -159,6 +213,7 @@ class _DetailsListState extends State<DetailsListPage> {
       Iterable<Contact> contacts = await ContactsService.getContacts();
 
       String phoneNum, fullName, email;
+      dynamic avatar;
       var con;
 
       print("PHONE");
@@ -170,7 +225,9 @@ class _DetailsListState extends State<DetailsListPage> {
 
         fullName = contact.displayName;
 
-        con = {"phone": phoneNum, "name": fullName, "email":email};
+        avatar = contact.avatar;
+
+        con = {"phone": phoneNum, "name": fullName, "email": email, "avatar": avatar };
 
         sortedContacts.add(con);
         // sortedContactsWithouSelected.add(con);
